@@ -1,0 +1,4 @@
+.emacs*
+dist-newstyle/
+shell.sh
+.gcroots/
