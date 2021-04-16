@@ -43,6 +43,7 @@ executable hkd-playground
                       , TypeApplications
                       , TypeFamilies
                       , UndecidableInstances
+                      , PatternSynonyms
 
     build-depends:    base
                     , barbies

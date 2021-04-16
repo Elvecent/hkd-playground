@@ -10,6 +10,7 @@ import           Barbies.TH
 import           Control.Monad
 import           Control.Monad.Validation
 import           Data.Char
+import           Data.Foldable            (fold)
 import           Data.Functor.Const
 import           Data.Functor.Identity
 import           Data.Hashable            (hash)
@@ -66,6 +67,10 @@ declareBareB [d|
     } deriving Show |]
 
 type RawRegister = Register Covered (Const String)
+
+pattern RawRegister :: String -> String -> RawRegister
+pattern RawRegister login password = Register (Const login) (Const password)
+
 type ValidRegister = Register Bare Identity
 
 instance App m => Validatable m [ValidationError] RawRegister ValidRegister where
@@ -82,6 +87,10 @@ declareBareB [d|
     } deriving Show |]
 
 type RawSignIn = SignIn Covered (Const String)
+
+pattern RawSignIn :: String -> String -> RawSignIn
+pattern RawSignIn login password = SignIn (Const login) (Const password)
+
 type ValidSignIn = SignIn Bare Identity
 
 instance App m => Validatable m [ValidationError] String StoredCredentials where
@@ -96,11 +105,15 @@ instance App m => Validatable m [ValidationError] String StoredCredentials where
         password
 
 instance App m => Validatable m [ValidationError] RawSignIn ValidSignIn where
-  validate' (SignIn (Const login) (Const password)) = do
+  validate' (RawSignIn login password) = do
     (StoredCredentials login' password') <- validate login
     unless (hash password == password') $ loginError
       "invalid password"
     return $ SignIn login' password'
+  validate' (SignIn _ _) = error $ fold
+    [ "Getting around dumb exhaustiveness analysis."
+    , "If you see this, well, the compiler is smarter than me."
+    ]
 
 register :: App m => ValidRegister -> m ()
 register (Register

@@ -13,10 +13,10 @@ import           Validation
 testRegister :: App m => m ()
 testRegister =
   let
-    raw = Register (Const "login") (Const "password")
+    raw = RawRegister "login" "password"
   in do
     (errs, mvalid) <- runValidationT $
-      validate @ValidRegister @RawRegister raw
+      validate raw
     traverse_ (logLine . show) errs
     case mvalid of
       Nothing -> logLine "registration failed"
@@ -25,10 +25,10 @@ testRegister =
 testSignIn :: App m => m ()
 testSignIn =
   let
-    raw = SignIn (Const "login") (Const "password")
+    raw = RawSignIn "login" "password"
   in do
   (errs, mvalid) <- runValidationT $
-    validate @ValidSignIn @RawSignIn raw
+    validate @ValidSignIn raw
   traverse_ (logLine . show) errs
   case mvalid of
     Nothing -> logLine "login failed"
