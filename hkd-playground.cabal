@@ -44,6 +44,7 @@ executable hkd-playground
                       , TypeFamilies
                       , UndecidableInstances
                       , PatternSynonyms
+                      , PolyKinds
 
     build-depends:    base
                     , barbies

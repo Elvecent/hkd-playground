@@ -1,6 +1,5 @@
 module Main where
 
-import           Control.Lens
 import           Control.Monad.Reader
 import           Control.Monad.Validation
 import           Data.Foldable
@@ -36,11 +35,11 @@ testSignIn =
 
 main :: IO ()
 main = do
-  state <- H.new
+  state <- AppState <$> H.new
   traverse_ (run state)
     [ testRegister
     , testSignIn ]
   where
     run state a =
-      flip runReaderT (AppState state)
+      flip runReaderT state
       . runApp $ a

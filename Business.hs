@@ -7,35 +7,35 @@ module Business where
 import           Barbies
 import           Barbies.Bare
 import           Barbies.TH
+import           Control.Lens
 import           Control.Monad
 import           Control.Monad.Validation
 import           Data.Char
 import           Data.Foldable            (fold)
-import           Data.Functor.Const
-import           Data.Functor.Identity
 import           Data.Hashable            (hash)
 import           Data.Maybe
 
 import           App
 import           Validation
 
-data ValidationError
-  = RegistrationError String
-  | RegistrationWarning String
-  | LoginError String
-  deriving Show
+data ErrorType
+  = RegistrationError
+  | LoginError
+  deriving (Show, Eq, Ord)
+
+type ValidationError = MonoidMap ErrorType String
 
 registrationError
-  :: Monad m => String -> ValidationT [ValidationError] m a
-registrationError = vError . (:[]) . RegistrationError
+  :: Monad m => String -> ValidationT ValidationError m a
+registrationError = vErrorL (at RegistrationError) . Just
 
 registrationWarning
-  :: Monad m => String -> ValidationT [ValidationError] m ()
-registrationWarning = vWarning . (:[]) . RegistrationWarning
+  :: Monad m => String -> ValidationT ValidationError m ()
+registrationWarning = vWarningL (at LoginError) . Just
 
 loginError
-  :: Monad m => String -> ValidationT [ValidationError] m a
-loginError = vError . (:[]) . LoginError
+  :: Monad m => String -> ValidationT ValidationError m a
+loginError = vErrorL (at LoginError) . Just
 
 newtype Password = Password String
   deriving Show
@@ -43,7 +43,7 @@ newtype Password = Password String
 newtype Login = Login String
   deriving Show
 
-instance App m => Validatable m [ValidationError] String Login where
+instance App m => Validatable m ValidationError String Login where
   validate' login = do
     when (null login) $ registrationError
       "logins cannot be empty"
@@ -52,7 +52,7 @@ instance App m => Validatable m [ValidationError] String Login where
       "login '" <> login <> "' is already occupied"
     return $ Login login
 
-instance Validatable m [ValidationError] String Password where
+instance Validatable m ValidationError String Password where
   validate' password = do
     when (length password < 8) $ registrationError
       "passwords must be at least 8 characters long"
@@ -73,7 +73,7 @@ pattern RawRegister login password = Register (Const login) (Const password)
 
 type ValidRegister = Register Bare Identity
 
-instance App m => Validatable m [ValidationError] RawRegister ValidRegister where
+instance App m => Validatable m ValidationError RawRegister ValidRegister where
   validate' = bvalidate
 
 data StoredCredentials =
@@ -93,7 +93,7 @@ pattern RawSignIn login password = SignIn (Const login) (Const password)
 
 type ValidSignIn = SignIn Bare Identity
 
-instance App m => Validatable m [ValidationError] String StoredCredentials where
+instance App m => Validatable m ValidationError String StoredCredentials where
   validate' login = do
     mPassword <- lookupEntry login
     case mPassword of
@@ -104,7 +104,7 @@ instance App m => Validatable m [ValidationError] String StoredCredentials where
         (Login login)
         password
 
-instance App m => Validatable m [ValidationError] RawSignIn ValidSignIn where
+instance App m => Validatable m ValidationError RawSignIn ValidSignIn where
   validate' (RawSignIn login password) = do
     (StoredCredentials login' password') <- validate login
     unless (hash password == password') $ loginError
