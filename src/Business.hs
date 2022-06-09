@@ -22,7 +22,7 @@ data ValidationError
   = RegistrationError String
   | RegistrationWarning String
   | LoginError String
-  deriving Show
+  deriving (Show, Eq)
 
 registrationError
   :: Monad m => String -> ValidationT [ValidationError] m a
