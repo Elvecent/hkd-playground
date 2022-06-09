@@ -4,7 +4,6 @@ import           Control.Monad.Reader
 import qualified Data.HashTable.IO    as H
 import           Data.Hashable        (hash)
 
-
 newtype AppState = AppState { unAppState :: H.BasicHashTable String Int }
 
 newtype AppM a = AppM { runApp :: ReaderT AppState IO a }
@@ -18,15 +17,15 @@ class Monad m => App m where
 
 instance App AppM where
   lookupEntry str = do
-    h <- unAppState <$> ask
+    h <- asks unAppState
     liftIO $ H.lookup h str
 
   mutateEntry str f = do
-    h <- unAppState <$> ask
+    h <- asks unAppState
     liftIO $ H.mutate h str (\m -> (f m, ()))
 
   insertEntry str1 str2 = do
-    h <- unAppState <$> ask
+    h <- asks unAppState
     liftIO $ H.insert h str1 (hash str2)
 
   logLine = liftIO . putStrLn

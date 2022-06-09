@@ -18,42 +18,50 @@ maintainer:         kvalyavin@ya.ru
 -- category:
 extra-source-files: CHANGELOG.md
 
+library
+   exposed-modules: App
+                  , Validation
+                  , Business
+   hs-source-dirs: src
+   default-extensions: DataKinds
+                     , DerivingStrategies
+                     , DerivingVia
+                     , FlexibleContexts
+                     , FlexibleInstances
+                     , GeneralizedNewtypeDeriving
+                     , MultiParamTypeClasses
+                     , FunctionalDependencies
+                     , ScopedTypeVariables
+                     , StandaloneDeriving
+                     , TemplateHaskell
+                     , TypeApplications
+                     , TypeFamilies
+                     , UndecidableInstances
+   build-depends: base
+                , barbies
+                , barbies-th
+                , validationt
+                , lens
+                , hashtables
+                , hashable
+                , mtl
+                    
 executable hkd-playground
     main-is:          Main.hs
 
-    other-modules:  App
-                  , Validation
-                  , Business
-    default-extensions: DeriveGeneric
-                      , DerivingStrategies
-                      , DerivingVia
-                      , FlexibleContexts
-                      , FlexibleInstances
-                      , GeneralizedNewtypeDeriving
-                      , GADTs
-                      , DataKinds
-                      , InstanceSigs
-                      , MultiParamTypeClasses
-                      , FunctionalDependencies
-                      , RankNTypes
-                      , ScopedTypeVariables
-                      , StandaloneDeriving
-                      , TemplateHaskell
-                      , QuasiQuotes
-                      , TypeApplications
-                      , TypeFamilies
-                      , UndecidableInstances
-
     build-depends:    base
-                    , barbies
-                    , barbies-th
-                    , validationt
-                    , lens
-                    , hashtables
-                    , hashable
-                    , mtl
+                    , hkd-playground
                     , pretty-simple
 
     ghc-options:      -Wall
     default-language: Haskell2010
     
+test-suite test
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          Main.hs
+    build-depends:    base
+                    , tasty
+                    , tasty-hunit
+                    , hkd-playground
+                                                   

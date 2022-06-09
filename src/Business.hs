@@ -1,5 +1,5 @@
-{-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module Business where
