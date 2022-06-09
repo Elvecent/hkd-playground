@@ -35,6 +35,7 @@ common common
                      , GeneralizedNewtypeDeriving
                      , MultiParamTypeClasses
                      , FunctionalDependencies
+                     , PatternSynonyms
                      , ScopedTypeVariables
                      , StandaloneDeriving
                      , TemplateHaskell

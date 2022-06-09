@@ -7,34 +7,35 @@ module Business where
 import           Barbies
 import           Barbies.Bare
 import           Barbies.TH
+import           Control.Lens
 import           Control.Monad
 import           Control.Monad.Validation
 import           Data.Char
-import           Data.Functor.Const
-import           Data.Functor.Identity
+import           Data.Foldable            (fold)
 import           Data.Hashable            (hash)
 import           Data.Maybe
 
 import           App
 import           Validation
 
-data ValidationError
-  = RegistrationError String
-  | RegistrationWarning String
-  | LoginError String
-  deriving (Show, Eq)
+data ErrorType
+  = RegistrationError
+  | LoginError
+  deriving (Show, Eq, Ord)
+
+type ValidationError = MonoidMap ErrorType String
 
 registrationError
-  :: Monad m => String -> ValidationT [ValidationError] m a
-registrationError = vError . (:[]) . RegistrationError
+  :: Monad m => String -> ValidationT ValidationError m a
+registrationError = vErrorL (at RegistrationError) . Just
 
 registrationWarning
-  :: Monad m => String -> ValidationT [ValidationError] m ()
-registrationWarning = vWarning . (:[]) . RegistrationWarning
+  :: Monad m => String -> ValidationT ValidationError m ()
+registrationWarning = vWarningL (at RegistrationError) . Just
 
 loginError
-  :: Monad m => String -> ValidationT [ValidationError] m a
-loginError = vError . (:[]) . LoginError
+  :: Monad m => String -> ValidationT ValidationError m a
+loginError = vErrorL (at LoginError) . Just
 
 newtype Password = Password String
   deriving Show
@@ -42,7 +43,7 @@ newtype Password = Password String
 newtype Login = Login String
   deriving Show
 
-instance App m => Validatable m [ValidationError] String Login where
+instance App m => Validatable m ValidationError String Login where
   validate' login = do
     when (null login) $ registrationError
       "logins cannot be empty"
@@ -51,7 +52,7 @@ instance App m => Validatable m [ValidationError] String Login where
       "login '" <> login <> "' is already occupied"
     return $ Login login
 
-instance Validatable m [ValidationError] String Password where
+instance Validatable m ValidationError String Password where
   validate' password = do
     when (length password < 8) $ registrationError
       "passwords must be at least 8 characters long"
@@ -66,9 +67,13 @@ declareBareB [d|
     } deriving Show |]
 
 type RawRegister = Register Covered (Const String)
+
+pattern RawRegister :: String -> String -> RawRegister
+pattern RawRegister login password = Register (Const login) (Const password)
+
 type ValidRegister = Register Bare Identity
 
-instance App m => Validatable m [ValidationError] RawRegister ValidRegister where
+instance App m => Validatable m ValidationError RawRegister ValidRegister where
   validate' = bvalidate
 
 data StoredCredentials =
@@ -82,9 +87,13 @@ declareBareB [d|
     } deriving Show |]
 
 type RawSignIn = SignIn Covered (Const String)
+
+pattern RawSignIn :: String -> String -> RawSignIn
+pattern RawSignIn login password = SignIn (Const login) (Const password)
+
 type ValidSignIn = SignIn Bare Identity
 
-instance App m => Validatable m [ValidationError] String StoredCredentials where
+instance App m => Validatable m ValidationError String StoredCredentials where
   validate' login = do
     mPassword <- lookupEntry login
     case mPassword of
@@ -95,12 +104,16 @@ instance App m => Validatable m [ValidationError] String StoredCredentials where
         (Login login)
         password
 
-instance App m => Validatable m [ValidationError] RawSignIn ValidSignIn where
-  validate' (SignIn (Const login) (Const password)) = do
+instance App m => Validatable m ValidationError RawSignIn ValidSignIn where
+  validate' (RawSignIn login password) = do
     (StoredCredentials login' password') <- validate login
     unless (hash password == password') $ loginError
       "invalid password"
     return $ SignIn login' password'
+  validate' (SignIn _ _) = error $ fold
+    [ "Getting around dumb exhaustiveness analysis."
+    , "If you see this, well, the compiler is smarter than me."
+    ]
 
 register :: App m => ValidRegister -> m ()
 register (Register
