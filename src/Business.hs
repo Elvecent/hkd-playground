@@ -61,8 +61,8 @@ instance Validatable m [ValidationError] String Password where
 
 declareBareB [d|
   data Register = Register
-    { login    :: Login
-    , password :: Password
+    { rLogin    :: Login
+    , rPassword :: Password
     } deriving Show |]
 
 type RawRegister = Register Covered (Const String)
@@ -77,8 +77,8 @@ data StoredCredentials =
 
 declareBareB [d|
   data SignIn = SignIn
-    { login    :: Login
-    , password :: Int
+    { sLogin    :: Login
+    , sPassword :: Int
     } deriving Show |]
 
 type RawSignIn = SignIn Covered (Const String)

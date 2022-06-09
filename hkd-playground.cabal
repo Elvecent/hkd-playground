@@ -18,11 +18,15 @@ maintainer:         kvalyavin@ya.ru
 -- category:
 extra-source-files: CHANGELOG.md
 
-library
-   exposed-modules: App
-                  , Validation
-                  , Business
-   hs-source-dirs: src
+common common
+   build-depends: base
+                , barbies
+                , barbies-th
+                , validationt
+                , lens
+                , hashtables
+                , hashable
+                , mtl
    default-extensions: DataKinds
                      , DerivingStrategies
                      , DerivingVia
@@ -37,20 +41,19 @@ library
                      , TypeApplications
                      , TypeFamilies
                      , UndecidableInstances
-   build-depends: base
-                , barbies
-                , barbies-th
-                , validationt
-                , lens
-                , hashtables
-                , hashable
-                , mtl
+
+library
+   import: common
+   exposed-modules: App
+                  , Validation
+                  , Business
+   hs-source-dirs: src
                     
 executable hkd-playground
+    import: common
     main-is:          Main.hs
 
-    build-depends:    base
-                    , hkd-playground
+    build-depends:    hkd-playground
                     , pretty-simple
 
     ghc-options:      -Wall
